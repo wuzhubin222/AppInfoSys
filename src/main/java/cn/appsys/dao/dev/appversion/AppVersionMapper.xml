@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.appsys.dao.dev.appversion.AppVersionMapper">
+
+	<!-- 根据appinfo的id去查询当前app的历史版本列表信息(app_version) -->
+	<select id="queryAppVersionListByAppId" resultType="AppVersion">
+		SELECT v.*,i.softwareName AS appName,(SELECT valueName FROM `data_dictionary` WHERE `typeCode` = 'PUBLISH_STATUS' AND `valueId` = v.`publishStatus`) AS publishStatusName
+			FROM `app_version` v,app_info i WHERE i.id = v.appId
+			AND `appId` = #{appId}
+	</select>
+	
+	<!-- 新增app版本信息 -->
+	<insert id="addAppVersion" parameterType="AppVersion">
+		INSERT INTO `appinfodb`.`app_version`
+            (`appId`,
+             `versionNo`,
+             `versionInfo`,
+             `publishStatus`,
+             `downloadLink`,
+             `versionSize`,
+             `createdBy`,
+             `creationDate`,
+             `apkLocPath`,
+             `apkFileName`)
+		VALUES (#{appId},
+		        #{versionNo},
+		        #{versionInfo},
+		        #{publishStatus},
+		        #{downloadLink},
+		        #{versionSize},
+		        #{createdBy},
+		        #{creationDate},
+		        #{apkLocPath},
+		        #{apkFileName})
+		<selectKey resultType="java.lang.Integer" keyProperty="id">
+            <!-- Mybatis中插入记录后获取该条记录ID -->
+            SELECT LAST_INSERT_ID() AS id 
+		</selectKey>
+	</insert>
+	
+	<!-- 通过app版本id查询app版本的详情对象信息 -->
+	<select id="getAppVersionByVid" parameterType="int" resultType="AppVersion">
+		SELECT * FROM `app_version` WHERE `id`= #{vid}
+	</select>
+	
+	<update id="deleteApkPath">
+		update app_version 
+			set apkLocPath=null,
+				downloadLink=null,
+				apkFileName=null
+			where id = #{vid}
+	</update>
+	
+</mapper>

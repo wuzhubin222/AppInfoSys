@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.appsys.dao.dev.appinfo.DevAppInfoMapper">
+
+	<select id="queryAppPageInfo" resultType="AppInfo">
+		SELECT i.id,i.`softwareName`,i.`APKName`,i.`softwareSize`,
+		(SELECT valueName FROM `data_dictionary` WHERE `valueId` = i.`status` AND typeCode = 'APP_STATUS') AS statusName,i.`status`,
+		(SELECT valueName FROM `data_dictionary` WHERE `valueId` = i.`flatformId` AND typeCode = 'APP_FLATFORM') AS flatformName,i.`flatformId`,
+		(SELECT categoryName FROM `app_category` c WHERE i.`categoryLevel1` = c.id) AS categoryLevel1Name,i.`categoryLevel1`,
+		(SELECT categoryName FROM `app_category` c WHERE i.`categoryLevel2` = c.id) AS categoryLevel2Name,i.`categoryLevel2`,
+		(SELECT categoryName FROM `app_category` c WHERE i.`categoryLevel3` = c.id) AS categoryLevel3Name, i.`categoryLevel3`,
+		i.`downloads`,i.`versionId`,(SELECT versionNo FROM `app_version` v WHERE v.id = i.`versionId`) AS versionNo
+		 FROM `app_info` i
+		 <where>
+			<if test="querySoftwareName != null and querySoftwareName != ''">
+				and i.`softwareName` like CONCAT ('%', #{querySoftwareName} ,'%')
+			</if>
+			<if test="queryStatus != null and queryStatus != 0">
+				and i.`status` = #{queryStatus}
+			</if>
+			<if test="queryFlatformId != null and queryFlatformId != 0">
+				and i.`flatformId` = #{queryFlatformId}
+			</if>
+			<if test="queryCategoryLevel1 != null and queryCategoryLevel1 != 0">
+				and i.`categoryLevel1` = #{queryCategoryLevel1}
+			</if>
+			<if test="queryCategoryLevel2 != null and queryCategoryLevel2 != 0">
+				and i.`categoryLevel2` = #{queryCategoryLevel2}
+			</if>
+			<if test="queryCategoryLevel3 != null and queryCategoryLevel3 != 0">
+				and i.`categoryLevel3` = #{queryCategoryLevel3}
+			</if>
+		</where>
+		ORDER BY creationDate DESC limit #{from},#{pageSize}
+	</select>
+	
+	<select id="queryCount" resultType="int">
+		select count(1) from `app_info`	i
+		<where>
+			<if test="querySoftwareName != null and querySoftwareName != ''">
+				and i.`softwareName` like CONCAT ('%', #{querySoftwareName} ,'%')
+			</if>
+			<if test="queryStatus != null and queryStatus != 0">
+				and i.`status` = #{queryStatus}
+			</if>
+			<if test="queryFlatformId != null and queryFlatformId != 0">
+				and i.`flatformId` = #{queryFlatformId}
+			</if>
+			<if test="queryCategoryLevel1 != null and queryCategoryLevel1 != 0">
+				and i.`categoryLevel1` = #{queryCategoryLevel1}
+			</if>
+			<if test="queryCategoryLevel2 != null and queryCategoryLevel2 != 0">
+				and i.`categoryLevel2` = #{queryCategoryLevel2}
+			</if>
+			<if test="queryCategoryLevel3 != null and queryCategoryLevel3 != 0">
+				and i.`categoryLevel3` = #{queryCategoryLevel3}
+			</if>
+		</where>
+	</select>
+	
+	<select id="queryInfoByIdAndAPK" resultType="AppInfo">
+		SELECT i.id,i.`softwareName`,i.`APKName`,i.`softwareSize`,
+		(SELECT valueName FROM `data_dictionary` WHERE valueId = i.`flatformId` AND typeCode = 'APP_FLATFORM') 
+		AS flatformName,i.`flatformId`,
+		(SELECT categoryName FROM `app_category` c WHERE c.id = i.`categoryLevel1` ) AS categoryLevel1Name,
+		i.`categoryLevel1`,
+		(SELECT categoryName FROM `app_category` c WHERE c.id = i.`categoryLevel2` ) AS categoryLevel2Name,
+		i.`categoryLevel2`,
+		(SELECT categoryName FROM `app_category` c WHERE c.id = i.`categoryLevel3` ) AS categoryLevel3Name,
+		i.`categoryLevel3`,
+		(SELECT valueName FROM `data_dictionary` WHERE typeName = 'APP状态' AND valueId = i.`status`) AS statusName,
+		i.`status`,i.appInfo,i.logoLocPath,logoPicPath,i.supportROM,i.interfaceLanguage,
+		i.`downloads`,(SELECT versionNo FROM `app_version` v WHERE v.id = i.`versionId`) AS versionNo,i.`versionId`
+		FROM `app_info` i
+		<where>
+			<if test="id != null">
+				and i.id = #{id}
+			</if>
+			<if test="APKName != null">
+				and i.APKName = #{APKName}
+			</if>
+		</where>
+	</select>
+	
+	<insert id="insertAppInfo" parameterType="AppInfo">
+		INSERT INTO `appinfodb`.`app_info`
+            (`softwareName`,
+             `APKName`,
+             `supportROM`,
+             `interfaceLanguage`,
+             `softwareSize`,
+             `updateDate`,
+             `devId`,
+             `appInfo`,
+             `status`,
+             `onSaleDate`,
+             `offSaleDate`,
+             `flatformId`,
+             `categoryLevel3`,
+             `downloads`,
+             `createdBy`,
+             `creationDate`,
+             `categoryLevel1`,
+             `categoryLevel2`,
+             `logoPicPath`,
+             `logoLocPath`,
+             `versionId`)
+		VALUES (
+				#{softwareName},
+		        #{APKName},
+		        #{supportROM},
+		        #{interfaceLanguage},
+		        #{softwareSize},
+		        #{updateDate},
+		        #{devId},
+		        #{appInfo},
+		        #{status},
+		        #{onSaleDate},
+		        #{offSaleDate},
+		        #{flatformId},
+		        #{categoryLevel3},
+		        #{downloads},
+		        #{createdBy},
+		        #{creationDate},
+		        #{categoryLevel1},
+		        #{categoryLevel2},
+		        #{logoPicPath},
+		        #{logoLocPath},
+		        #{versionId})
+	</insert>
+	
+	<!-- 根据id将数据库中app_info表里指定的logoPicPath和logoLocPath两个列的值给清空 -->
+	<update id="deleteLogPath">
+		UPDATE `app_info` SET `logoPicPath` = NULL,`logoLocPath` = NULL
+			WHERE id = #{id}
+	</update>
+	
+	<!-- 修改appinfo -->
+	<update id="modifyAppInfo" parameterType="AppInfo">
+		UPDATE `appinfodb`.`app_info`
+			<set>
+				<if test="softwareName != null and softwareName != ''">`softwareName` = #{softwareName},</if>
+				<if test="APKName != null and APKName != ''">`APKName` = #{APKName},</if>
+				<if test="supportROM != null and supportROM != ''">`supportROM` = #{supportROM},</if>
+				<if test="interfaceLanguage != null and interfaceLanguage != ''">`interfaceLanguage` = #{interfaceLanguage},</if>
+				<if test="softwareSize != null and softwareSize != ''">`softwareSize` = #{softwareSize},</if>
+				<if test="updateDate != null and updateDate != ''">`updateDate` = #{updateDate},</if>
+				<if test="devId != null and devId != ''">`devId` = #{devId},</if>
+				<if test="appInfo != null and appInfo != ''">`appInfo` = #{appInfo},</if>
+				<if test="status != null and status != ''">`status` = #{status},</if>
+				<if test="onSaleDate != null and onSaleDate != ''">`onSaleDate` = #{onSaleDate},</if>
+				<if test="offSaleDate != null and offSaleDate != ''">`offSaleDate` = #{offSaleDate},</if>
+				<if test="flatformId != null and flatformId != ''">`flatformId` = #{flatformId},</if>
+				<if test="categoryLevel3 != null and categoryLevel3 != ''">`categoryLevel3` = #{categoryLevel3},</if>
+				<if test="downloads != null and downloads != ''">`downloads` = #{downloads},</if>
+				<if test="modifyBy != null and modifyBy != ''">`modifyBy` = #{modifyBy},</if>
+				<if test="modifyDate != null and modifyDate != ''">`modifyDate` = #{modifyDate},</if>
+				<if test="categoryLevel1 != null and categoryLevel1 != ''">`categoryLevel1` = #{categoryLevel1},</if>
+				<if test="categoryLevel2 != null and categoryLevel2 != ''">`categoryLevel2` = #{categoryLevel2},</if>
+				<if test="logoPicPath != null and logoPicPath != ''">`logoPicPath` = #{logoPicPath},</if>
+				<if test="logoLocPath != null and logoLocPath != ''">`logoLocPath` = #{logoLocPath},</if>
+				<if test="versionId != null and versionId != ''">`versionId` = #{versionId},</if>
+			</set>
+			WHERE `id` = #{id}
+	</update>
+	
+</mapper>

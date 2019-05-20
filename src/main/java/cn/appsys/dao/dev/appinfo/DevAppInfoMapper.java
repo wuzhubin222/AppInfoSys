@@ -1,0 +1,61 @@
+package cn.appsys.dao.dev.appinfo;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+
+import cn.appsys.pojo.AppInfo;
+
+public interface DevAppInfoMapper {
+
+	/**
+	 * 分页查询APP列表信息
+	 * @param querySoftwareName 软件名称
+	 * @param queryStatus APP状态
+	 * @param queryFlatformId 所属平台
+	 * @param queryCategoryLevel1 一级分类
+	 * @param queryCategoryLevel2 二级分类
+	 * @param queryCategoryLevel3 三级分类
+	 * @param currPageNo 当前页码
+	 * @return
+	 */
+	List<AppInfo> queryAppPageInfo(
+			@Param("querySoftwareName")String querySoftwareName,
+			@Param("queryStatus")Integer queryStatus,
+			@Param("queryFlatformId")Integer queryFlatformId,
+			@Param("queryCategoryLevel1")Integer queryCategoryLevel1,
+			@Param("queryCategoryLevel2")Integer queryCategoryLevel2,
+			@Param("queryCategoryLevel3")Integer queryCategoryLevel3,
+			@Param("from") Integer from,   //位置偏移量
+			@Param("pageSize") Integer pageSize);
+
+	//查询总记录数，用于分页
+	int queryCount(
+			@Param("querySoftwareName")String querySoftwareName,
+			@Param("queryStatus")Integer queryStatus,
+			@Param("queryFlatformId")Integer queryFlatformId,
+			@Param("queryCategoryLevel1")Integer queryCategoryLevel1,
+			@Param("queryCategoryLevel2")Integer queryCategoryLevel2,
+			@Param("queryCategoryLevel3")Integer queryCategoryLevel3);
+	
+	/**
+	 * 通过appinfo表的主键id与APKName字段查询app详情信息。
+	 * @param id 主键id
+	 * @param APKName
+	 * @return app详情信息。
+	 */
+	AppInfo queryInfoByIdAndAPK(@Param("id") Integer id,
+			@Param("APKName") String APKName);
+
+	//新增
+	int insertAppInfo(AppInfo info);
+	/**
+	 * 根据id将数据库中app_info表里指定的logoPicPath和logoLocPath两个列的值给清空
+	 * @param id appinfo的id
+	 * @return 受影响的行数
+	 */
+	int deleteLogPath(@Param("id")Integer id);
+	
+	//修改
+	int modifyAppInfo(AppInfo appInfo);
+}

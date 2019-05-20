@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.2.xsd">
+
+	<!-- cn.smbms.controller 包名用于存入各个控制器的，控制器类似S2的servlet是用于处理HTTP请求的 -->
+	<!-- 通过context:component-scan标签，Spring会自动去cn.smbms.controller包里进行扫描，一旦发现使用 
+		@Controller注解标注的类，让它注册Bean组件 -->
+	<context:component-scan base-package="cn.appsys.controller" />
+
+	<!--&lt;!&ndash; 让SpringMVC支持@Controller、@RequestMapping注解 &ndash;&gt;
+	<mvc:annotation-driven conversion-service="myConversionService">
+
+		<mvc:message-converters>
+		&lt;!&ndash; 配置字符串的消息转换器用于处理在返回的JSON字符串中出现中文乱码问题 &ndash;&gt;
+		<bean class="org.springframework.http.converter.StringHttpMessageConverter">
+			<property name="supportedMediaTypes">
+				<list>
+					&lt;!&ndash; 设置当前 消息转换器的编码格式为UTF-8,原来是ISO-8859-1 text/html;charset=UTF-8 &ndash;&gt;
+					<value>application/json;charset=UTF-8</value>
+				</list>
+			</property>
+		</bean>
+
+			&lt;!&ndash; 配置FastJson的消息转换器来解决 JSON数据传递过程中的日期格式问题 &ndash;&gt;
+			<bean
+				class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+				<property name="supportedMediaTypes">
+					<list>
+						&lt;!&ndash; 设置当前 消息转换器的编码格式为UTF-8,原来是ISO-8859-1 text/html;charset=UTF-8 &ndash;&gt;
+						<value>application/json;charset=UTF-8</value>
+					</list>
+				</property>
+				<property name="features">
+					<list>
+						&lt;!&ndash; 让当前json数据中的日期格式采用FastJson默认的日期格式(yyyy-MM-dd HH:mm:ss) &ndash;&gt;
+						<value>WriteDateUseDateFormat</value>
+					</list>
+				</property>
+			</bean>
+		</mvc:message-converters>
+	</mvc:annotation-driven>-->
+	<!-- 配置自定义的转换器 -->
+	<bean id="myConversionService"
+		class="org.springframework.context.support.ConversionServiceFactoryBean">
+		<property name="converters">
+			<list>
+				<bean class="cn.appsys.tools.StringToDateConverter">
+					<constructor-arg type="java.lang.String" value="yyyy-MM-dd"></constructor-arg>
+				</bean>
+			</list>
+		</property>
+	</bean>
+
+	<!-- 在springmvc-servlet.xml中使用<mvc:resources/>标签配置静态文件访问 -->
+	<mvc:resources location="/statics/" mapping="/statics/**" />
+
+	<!-- 2.4 配置支持文件上传——CommonsMultipartResolver -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 设置maxUploadSize即最大的上传大小为5000000byte。 即500kb -->
+		<property name="maxUploadSize" value="5000000"></property>
+		<property name="defaultEncoding" value="UTF-8"></property>
+	</bean>
+	
+	<!-- 配置多视图解析器——ContentNegoriatingViewResolver
+		JSON格式的视图解析器、HTML格式的视图解析器、XML格式的视图解析器
+		String str = "<h2><a href="">Hello world</a></h2>";
+		/user/view.html?id=1     /user/view.json?id=1
+	 -->
+	<bean class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+		<property name="favorParameter" value="true"></property>
+		<property name="mediaTypes">
+			<map>
+				<!-- 根据MIME格式的不同，设置 ContentType的值
+					如：/user/view.json?id=1    mime格式为json  "<h2><a href="">Hello world</a></h2>";
+				 -->
+				<entry key="xml" value="application/xml;charset=UTF-8"></entry>
+				<entry key="html" value="text/html;charset=UTF-8"></entry>
+				<entry key="json" value="application/json;charset=UTF-8"></entry>
+			</map>
+		</property>
+		<!-- 配置 Springmvc所需要的内部资源解析器-->
+		<property name="viewResolvers">
+			<list>
+				<bean
+					class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+					<property name="prefix" value="/WEB-INF/jsp/"></property>
+					<property name="suffix" value=".jsp"></property>
+				</bean>
+			</list>
+		</property>
+	</bean>
+	<!-- 在springmvc-servlet.xml中增加对拦截器的配置 -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<!-- 如果访问的路径中包含/user/关键字，那么当前请求就会被拦截器给拦截 -->
+			<mvc:mapping path="/user/**"/>
+			<bean class="cn.appsys.interceptor.SysInterceptor"></bean>
+		</mvc:interceptor>
+	</mvc:interceptors>
+
+	<mvc:default-servlet-handler/>
+	<context:component-scan base-package="cn.appsys.controller">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+		<context:include-filter type="annotation" expression="org.springframework.context.annotation.Configuration"/>
+		<context:include-filter type="annotation" expression="org.springframework.scheduling.annotation.Scheduled"/>
+	</context:component-scan>
+
+</beans>

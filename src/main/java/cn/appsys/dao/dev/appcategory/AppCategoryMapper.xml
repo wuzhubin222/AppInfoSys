@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.appsys.dao.dev.appcategory.AppCategoryMapper">
+	<select id="queryById" resultType="AppCategory">
+		select id,categoryCode,categoryName from `app_category` 
+		<where>
+			<if test="parentId != null">
+				and parentId = #{parentId}
+			</if>
+			
+			<!-- 即查询的是一级分类 -->
+			<if test="parentId == null">
+				and parentId is null  
+			</if>
+		</where>
+	</select>
+	
+</mapper>
